@@ -15,7 +15,7 @@ export const tools: Tool[] = [
     name: 'Notepad',
     description: 'A simple note-taking tool to jot down your ideas.',
     category: 'text',
-    route: '/notepad',
+    route: '/tools/notepad',
     icon: '📝',
     gradient: 'from-green-400 to-green-600',
   },
