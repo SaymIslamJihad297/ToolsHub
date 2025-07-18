@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Note, Folder, MediaFile, AppSettings } from '../types';
+import html2pdf from 'html2pdf.js';
 
 interface NotepadState {
   notes: Note[];
@@ -241,15 +242,59 @@ export const useNotepadStore = create<NotepadState>()(
             filename = `${note.title}.html`;
             mimeType = 'text/html';
             break;
+          case 'pdf':
+            // Create a temporary element for PDF generation
+            const element = document.createElement('div');
+            element.innerHTML = `
+              <div style="
+                font-family: Arial, sans-serif; 
+                max-width: 800px; 
+                margin: 0 auto; 
+                padding: 20px;
+                line-height: 1.6;
+              ">
+                <h1 style="
+                  color: #333; 
+                  border-bottom: 2px solid #eee; 
+                  padding-bottom: 10px;
+                  margin-bottom: 20px;
+                ">${note.title}</h1>
+                <div style="margin-top: 20px;">
+                  ${note.content}
+                </div>
+              </div>
+            `;
+
+            const opt = {
+              margin: 1,
+              filename: `${note.title}.pdf`,
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                letterRendering: true,
+                allowTaint: true
+              },
+              jsPDF: { 
+                unit: 'in', 
+                format: 'letter', 
+                orientation: 'portrait' 
+              }
+            };
+
+            html2pdf().set(opt).from(element).save();
+            return;
         }
 
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
+        if (format !== 'pdf') {
+          const blob = new Blob([content], { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
       },
 
       importNotes: async (files) => {
